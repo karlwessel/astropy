@@ -95,7 +95,7 @@ astropy.visualization
 astropy.wcs
 ^^^^^^^^^^^
 - Add IVOA UCD mappings for some FITS WCS keywords commonly used in solar physics. [#10965]
-- Fix error when user defined `proj_point` parameter is passed to `fit_wcs_from_points`. [#10991]
+- Fix error when user defined ``proj_point`` parameter is passed to ``fit_wcs_from_points``. [#10991]
 
 API Changes
 -----------
