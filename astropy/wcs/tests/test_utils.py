@@ -1213,6 +1213,11 @@ CRVAL2  =     -71.995508583333 / [deg] Coordinate value at reference point
     fit_wcs_prob = fit_wcs_from_points((x, y), world_pix_prob,
                                        proj_point='center', sip_degree=None)
 
+    # Fitting with user defined projection point
+    fit_wcs_user_proj = fit_wcs_from_points((x, y), world_pix_linear,
+                                            proj_point=world_pix_linear[0],
+                                            sip_degree=None)
+
     # Validate that the true sky coordinates calculated with `true_wcs_linear`
     # match sky coordinates calculated from the wcs fit with only linear terms
 
@@ -1236,6 +1241,16 @@ CRVAL2  =     -71.995508583333 / [deg] Coordinate value at reference point
 
     assert dists.max() < 7e-6*u.deg
     assert np.std(dists) < 2.5e-6*u.deg
+
+    # Validate with user defined projection point
+    world_pix_user_proj_new = fit_wcs_user_proj.pixel_to_world(x, y)
+    dists = world_pix_linear.separation(world_pix_user_proj_new)
+
+    assert dists.max() < 7e-5*u.deg
+    assert np.std(dists) < 2.5e-5*u.deg
+    projlon = world_pix_linear[0].data.lon.deg
+    projlat = world_pix_linear[0].data.lat.deg
+    assert (fit_wcs_user_proj.wcs.crval == [projlon, projlat]).all()
 
     # Test CRPIX bounds requirement
     wcs_str = """
