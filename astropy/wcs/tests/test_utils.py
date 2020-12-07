@@ -1303,6 +1303,24 @@ RADESYS = 'ICRS'               / Equatorial coordinate system
     assert (fit_wcs.wcs.crpix.astype(int) == [1100, 1005]).all()
     assert fit_wcs.pixel_shape == (200, 10)
 
+    # test issue #10991 (it just needs to run and set the user defined crval)
+    xy = np.array([[1766.88276168,  662.96432257,  171.50212526,  120.70924648],
+               [1706.69832901, 1788.85480559, 1216.98949653, 1307.41843381]])
+    world_coords = SkyCoord([(66.3542367 , 22.20000162), (67.15416174, 19.18042906),
+                             (65.73375432, 17.54251555), (66.02400512, 17.44413253)],
+                            frame="icrs", unit="deg")
+    proj_point = SkyCoord(64.67514918, 19.63389538,
+                          frame="icrs", unit="deg")
+
+    fit_wcs = fit_wcs_from_points(
+        xy=xy,
+        world_coords=world_coords,
+        proj_point=proj_point,
+        projection='TAN'
+    )
+    projlon = proj_point.data.lon.deg
+    projlat = proj_point.data.lat.deg
+    assert (fit_wcs.wcs.crval == [projlon, projlat]).all()
 
 @pytest.mark.remote_data
 @pytest.mark.parametrize('x_in,y_in', [[0, 0], [np.arange(5), np.arange(5)]])
