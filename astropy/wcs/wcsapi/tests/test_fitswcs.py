@@ -18,7 +18,7 @@ from astropy.io.fits import Header
 from astropy.io.fits.verify import VerifyWarning
 from astropy.units.core import UnitsWarning
 from astropy.utils.data import get_pkg_data_filename
-from astropy.wcs.wcs import WCS, FITSFixedWarning
+from astropy.wcs.wcs import WCS, FITSFixedWarning, Sip, NoConvergence
 from astropy.wcs.wcsapi.fitswcs import custom_ctype_to_ucd_mapping, VELOCITY_FRAMES
 from astropy.wcs._wcs import __version__ as wcsver
 from astropy.utils import iers
@@ -1010,3 +1010,32 @@ def test_spectralcoord_frame(header_spectral_frames):
             # the spectral coordinate unchanged
             sc_check = sc.with_observer_stationary_relative_to(expected_frame)
             assert_quantity_allclose(sc.quantity, sc_check.quantity)
+
+
+def test_non_convergence_warning():
+    """Test case for issue #11446
+    Since we can't define a target accuracy when plotting a WCS `all_world2pix`
+    should not error but only warn when the default accuracy can't be reached.
+    """
+    # define a minimal WCS where convergence fails for certain image positions
+    wcs = WCS(naxis=2)
+    crpix = [0, 0]
+    a = b = ap = bp = np.zeros((4, 4))
+    a[3, 0] = -1.20116753e-07
+
+    test_pos_x = [1000, 1]
+    test_pos_y = [0, 2]
+
+    wcs.sip = Sip(a, b, ap, bp, crpix)
+    # first make sure the WCS works when using a low accuracy
+    expected = wcs.all_world2pix(test_pos_x, test_pos_y, 0, tolerance=1e-3)
+
+    # then check that it fails when using the default accuracy
+    with pytest.raises(NoConvergence):
+        wcs.all_world2pix(test_pos_x, test_pos_y, 0)
+
+    # at last check that world_to_pixel_values raises a warning but returns
+    # the same 'low accuray' result
+    with pytest.warns(UserWarning):
+        assert_allclose(wcs.world_to_pixel_values(test_pos_x, test_pos_y),
+                        expected)
